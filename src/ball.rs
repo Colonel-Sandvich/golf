@@ -70,7 +70,11 @@ fn reset_ball(
 }
 
 #[derive(Event, Debug)]
-pub struct BallHitEvent;
+pub struct BallHitEvent {
+    pub speed: f32,
+}
+
+const LAUNCH_FACTOR: f32 = 2.0;
 
 fn launch_ball(
     mouse_click: Res<ButtonInput<MouseButton>>,
@@ -99,15 +103,17 @@ fn launch_ball(
 
     let dir = world_position - ball_pos.translation.xy();
 
-    ball_vel.0 = dir;
+    ball_vel.0 = dir * LAUNCH_FACTOR;
 
-    event_writer.send(BallHitEvent);
+    event_writer.send(BallHitEvent {
+        speed: ball_vel.length(),
+    });
 }
 
 #[derive(Event)]
 pub struct BallStoppedEvent;
 
-pub const ANGULAR_VEL_THRESHOLD: f32 = 1.0;
+pub const ANGULAR_VEL_THRESHOLD: f32 = 3.0;
 pub const VEL_THRESHOLD: f32 = 3.0;
 
 fn stop_ball(
@@ -116,10 +122,6 @@ fn stop_ball(
     level_state: Res<State<LevelState>>,
 ) {
     let (mut ball_vel, mut ball_roll) = ball_q.single_mut();
-
-    if ball_roll.0 == 0.0 && ball_vel.0.length() == 0.0 {
-        return;
-    }
 
     if ball_roll.0.abs() < ANGULAR_VEL_THRESHOLD && ball_vel.0.length() < VEL_THRESHOLD {
         ball_roll.0 = 0.0;

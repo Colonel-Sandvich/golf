@@ -1,4 +1,7 @@
-use bevy::{color::palettes::css::TOMATO, prelude::*};
+use bevy::{
+    color::palettes::css::{BLACK, TOMATO, WHITE},
+    prelude::*,
+};
 
 use crate::{
     ball::{BallHitEvent, BallStoppedEvent},
@@ -17,6 +20,16 @@ impl Plugin for LivesPlugin {
             react_to_ball_stopped.run_if(in_state(LevelState::InPlay)),
         );
         app.add_systems(Startup, setup);
+        app.add_systems(OnEnter(LevelState::Failed), fail)
+            .add_systems(
+                OnExit(LevelState::Failed),
+                |mut commands: Commands, game_over_screen: Query<Entity, With<GameOverScreen>>| {
+                    commands
+                        .entity(game_over_screen.single())
+                        .despawn_recursive();
+                },
+            )
+            .add_systems(OnEnter(LevelState::Win), || println!("Win!"));
     }
 }
 
@@ -79,4 +92,36 @@ fn setup(mut commands: Commands, lives: Res<LivesLeft>) {
         }),
         LivesText,
     ));
+}
+
+#[derive(Component)]
+struct GameOverScreen;
+
+fn fail(mut commands: Commands) {
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    ..default()
+                },
+                background_color: BackgroundColor(BLACK.with_alpha(0.75).into()),
+                ..default()
+            },
+            GameOverScreen,
+        ))
+        .with_children(|builder| {
+            builder.spawn(TextBundle::from_section(
+                "GAME OVER",
+                TextStyle {
+                    font: default(),
+                    font_size: 120.0,
+                    color: WHITE.into(),
+                },
+            ));
+        });
 }

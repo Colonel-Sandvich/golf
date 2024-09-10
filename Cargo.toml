@@ -7,6 +7,7 @@ edition = "2021"
 bevy = { version = "0.14", features = ["wayland", "dynamic_linking"] }
 avian2d = { version = "0.1", features = ["enhanced-determinism"] }
 bevy-inspector-egui = { version = "0.25" }
+earcutr = "0.4"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]

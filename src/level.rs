@@ -1,12 +1,14 @@
 use avian2d::{math::*, prelude::*};
 use bevy::{
+    color::palettes::tailwind::PURPLE_900,
     math::{vec2, vec3},
     prelude::*,
-    render::{mesh::PrimitiveTopology, render_asset::RenderAssetUsages},
+    render::{mesh::Indices, render_asset::RenderAssetUsages},
     sprite::MaterialMesh2dBundle,
 };
+use earcutr::earcut;
 
-use crate::{ball::Ball, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{ball::Ball, WINDOW_WIDTH};
 
 pub struct LevelPlugin;
 
@@ -15,13 +17,10 @@ impl Plugin for LevelPlugin {
         app.init_state::<LevelState>();
         app.insert_resource(Gravity(Vector::NEG_Y * 9.81 * 80.0));
         app.init_resource::<Tee>();
-        app.add_systems(PostStartup, setup)
-            .add_systems(
-                PostProcessCollisions,
-                detect_ball_in_goal.run_if(in_state(LevelState::InPlay)),
-            )
-            .add_systems(OnEnter(LevelState::Failed), || println!("Fail"))
-            .add_systems(OnEnter(LevelState::Success), || println!("Win!"));
+        app.add_systems(PostStartup, setup).add_systems(
+            PostProcessCollisions,
+            detect_ball_in_goal.run_if(in_state(LevelState::InPlay)),
+        );
     }
 }
 
@@ -36,106 +35,102 @@ fn setup(
 ) {
     let mut points = vec![
         Vec2::ZERO,
-        Vec2::Y * 25.0,
-        Vec2::X * 800.0,
+        Vec2::X * 300.0,
         vec2(100.0, 50.0),
         Vec2::X * 200.0,
         Vec2::Y * -75.0,
         Vec2::X * 50.0,
         Vec2::Y * 75.0,
-        Vec2::X * 130.0,
-        Vec2::Y * -100.0,
-        Vec2::X * -1280.0,
+        Vec2::X * 70.0,
+        Vec2::Y * -1025.0,
+        Vec2::X * -720.0,
+        Vec2::Y * 925.0,
     ];
     let mut running = Vec2::ZERO;
     for vec in &mut points {
-        let temp = vec.clone();
+        let temp = *vec;
         *vec += running;
         running += temp;
     }
-    // dbg!(&points);
 
-    let color = Color::BLACK.to_linear().to_f32_array();
-    let level_mesh = meshes.add(
-        Mesh::new(PrimitiveTopology::PointList, RenderAssetUsages::default())
-            .with_inserted_attribute(
-                Mesh::ATTRIBUTE_POSITION,
-                points
-                    .clone()
-                    .iter()
-                    .map(|p| p.extend(0.0).to_array())
-                    .collect::<Vec<[f32; 3]>>(),
-            )
-            .with_inserted_attribute(Mesh::ATTRIBUTE_COLOR, vec![color; points.len()]),
+    let flattened_points: Vec<f32> = points.iter().flat_map(|p| vec![p[0], p[1]]).collect();
+
+    // Triangulate the polygon, resulting in indices for a triangle mesh
+    let Ok(indices) = earcut(&flattened_points, &Vec::new(), 2) else {
+        panic!("AA!!");
+    };
+
+    // Create a Bevy mesh
+    let mut mesh = Mesh::new(
+        bevy::render::mesh::PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
     );
-    let goal_bl = points[5].clone().extend(0.0);
 
-    let collider = Collider::polyline(points, None);
-    // let collider = BoxedPolygon::new(points).collider();
+    // Set the positions (converting points into Vec3, where z is 0)
+    let positions: Vec<[f32; 3]> = points.iter().map(|&p| [p[0], p[1], 0.0]).collect();
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
 
-    let square_size = 50.0;
-    let square = Rectangle::new(30.0 * square_size, square_size);
+    let uvs: Vec<[f32; 2]> = points.iter().map(|&p| [p[0], p[1]]).collect();
+    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
 
-    let window_bl = vec3(-WINDOW_WIDTH / 2.0, -WINDOW_HEIGHT / 2.0, 0.0);
-
-    commands.spawn((
-        Name::new("Floor"),
-        ColorMesh2dBundle {
-            mesh: level_mesh.into(),
-            material: materials.add(Color::BLACK),
-            transform: Transform::from_translation(window_bl + Vec3::Y * 25.0),
-            ..default()
-        },
-        collider,
-        RigidBody::Static,
-        Friction::new(1.0),
-        Restitution::new(0.0),
+    mesh.insert_indices(Indices::U32(
+        indices.into_iter().map(|i| i as u32).collect(),
     ));
 
-    let circle_radius = 7.5;
-    let circle = Circle::new(circle_radius);
+    let goal_bl = points[4].extend(0.0);
 
-    tee.0 = vec3(-300.0, -300.0, 0.0);
+    let start = vec3(-WINDOW_WIDTH / 2.0, -200.0, 0.0);
+
+    let collider = Collider::polyline(points, None);
+
+    let floor = commands
+        .spawn((
+            Name::new("Floor"),
+            ColorMesh2dBundle {
+                mesh: meshes.add(mesh).into(),
+                material: materials.add(ColorMaterial::from_color(PURPLE_900)),
+                transform: Transform::from_translation(start + Vec3::Y * 25.0),
+                ..default()
+            },
+            collider,
+            RigidBody::Static,
+            Friction::new(0.4),
+            Restitution::new(0.3),
+        ))
+        .id();
+
+    let ball_radius = 7.5;
+    let ball = Circle::new(ball_radius);
+
+    tee.0 = Vec3::Y * ball_radius + Vec3::X * 50.0 + start + Vec3::Y * 25.0;
 
     commands.spawn((
         Name::new("Ball"),
         Ball,
         MaterialMesh2dBundle {
-            mesh: meshes.add(circle).into(),
+            mesh: meshes.add(ball).into(),
             material: materials.add(Color::WHITE),
             transform: Transform::from_translation(tee.0),
             ..default()
         },
-        circle.collider(),
+        ball.collider(),
         RigidBody::Dynamic,
-        Friction::new(1.0),
-        AngularDamping(2.0),
-        Restitution::new(0.0),
+        Friction::new(0.4),
+        AngularDamping(4.0),
+        // LockedAxes::ROTATION_LOCKED,
+        Restitution::new(0.4),
+        SweptCcd::LINEAR,
     ));
 
-    commands.spawn((
-        Name::new("Goal"),
-        Goal,
-        Collider::rectangle(50.0, 50.0),
-        Sensor,
-        Transform::from_translation(goal_bl + window_bl + vec3(25.0, 50.0, 0.0)),
-    ));
-
-    // let triangle = Triangle2d::new(vec2(0.0, 0.0), vec2(25.0, 50.0), vec2(50.0, 0.0));
-
-    // commands.spawn((
-    //     Name::new("Ramp"),
-    //     MaterialMesh2dBundle {
-    //         mesh: meshes.add(triangle).into(),
-    //         material: materials.add(Color::BLACK),
-    //         transform: Transform::from_xyz(0.0, -square_size * 6.5, 0.0),
-    //         ..default()
-    //     },
-    //     triangle.collider(),
-    //     RigidBody::Static,
-    //     Friction::new(1.0),
-    //     Restitution::new(0.6),
-    // ));
+    commands
+        .spawn((
+            Name::new("Goal"),
+            Goal,
+            Collider::rectangle(50.0, 50.0),
+            Sensor,
+            Transform::from_translation(goal_bl + vec3(25.0, 25.0, 0.0)),
+        ))
+        .set_parent(floor);
 }
 
 #[derive(Component)]
@@ -149,7 +144,7 @@ fn detect_ball_in_goal(
     for entities in &goal_collisions_q {
         if entities.contains(&ball_q.single()) {
             println!("GOAL!");
-            next_level_state.set(LevelState::Success);
+            next_level_state.set(LevelState::Win);
         }
     }
 }
@@ -160,5 +155,5 @@ pub enum LevelState {
     Playable,
     InPlay,
     Failed,
-    Success,
+    Win,
 }
