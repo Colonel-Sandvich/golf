@@ -7,20 +7,18 @@ use bevy::{
 };
 
 use crate::{
-    app::AppState,
     ball::{Ball, BallResetEvent},
     cam::on_level_resize_zoom,
+    course::NextLevelIndex,
     level_data::Levels,
 };
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, States, Default)]
+#[derive(States, Default, Debug, PartialEq, Eq, Clone, Hash)]
 pub enum LevelState {
     #[default]
     Playable,
     InPlay,
-    Failed,
-    Win,
-    LoadNext,
+    Won,
 }
 
 pub struct LevelPlugin;
@@ -29,34 +27,16 @@ impl Plugin for LevelPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<LevelState>();
 
-        app.init_resource::<NextLevelIndex>();
-
         app.add_systems(Startup, setup);
 
         app.add_systems(
             Update,
             detect_ball_in_goal.run_if(in_state(LevelState::InPlay)),
-        )
-        .add_systems(OnEnter(LevelState::Win), reduce_ball_bounciness);
+        );
 
         app.add_systems(
             Update,
-            tick_level_transition_timer.run_if(in_state(LevelState::Win)),
-        );
-
-        // Handles being able to show the first level before player clicks "PLAY"
-        app.add_systems(
-            OnEnter(AppState::InGame),
-            advance_level.run_if(in_state(LevelState::LoadNext)),
-        );
-
-        app.add_systems(OnEnter(LevelState::LoadNext), advance_level);
-
-        app.add_systems(
-            OnEnter(AppState::Menu),
-            |mut next_level_index: ResMut<NextLevelIndex>| {
-                **next_level_index = 0;
-            },
+            tick_level_transition_timer.run_if(in_state(LevelState::Won)),
         );
     }
 }
@@ -76,7 +56,6 @@ fn setup(
     mut commands: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut next_level_state: ResMut<NextState<LevelState>>,
 ) {
     let floor = commands
         .spawn((
@@ -121,17 +100,12 @@ fn setup(
             TransformBundle::default(),
         ))
         .set_parent(floor);
-
-    next_level_state.set(LevelState::LoadNext);
 }
 
-#[derive(Resource, Default, Deref, DerefMut, Debug)]
-struct NextLevelIndex(usize);
-
-fn advance_level(
+pub fn load_level(
     mut commands: Commands,
     levels: Res<Levels>,
-    mut next_level_index: ResMut<NextLevelIndex>,
+    next_level_index: Res<NextLevelIndex>,
     mut level_q: Query<
         (
             Entity,
@@ -144,13 +118,18 @@ fn advance_level(
     >,
     mut goal_q: Query<&mut Transform, With<Goal>>,
     mut reset_ball_events: EventWriter<BallResetEvent>,
-    mut next_level_state: ResMut<NextState<LevelState>>,
-    mut next_app_state: ResMut<NextState<AppState>>,
 ) {
-    let (level_entity, mut mesh, mut material, mut collider, mut tee) = level_q.single_mut();
+    if levels.is_empty() {
+        return;
+    }
+
+    let Ok((level_entity, mut mesh, mut material, mut collider, mut tee)) =
+        level_q.get_single_mut()
+    else {
+        return;
+    };
 
     let Some(next_level) = &levels.0.get(**next_level_index) else {
-        next_app_state.set(AppState::Menu);
         return;
     };
 
@@ -170,10 +149,6 @@ fn advance_level(
 
     // Recompute Aabb since we changed the mesh
     commands.entity(level_entity).remove::<Aabb>();
-
-    **next_level_index += 1;
-
-    next_level_state.set(LevelState::Playable);
 }
 
 fn detect_ball_in_goal(
@@ -189,16 +164,9 @@ fn detect_ball_in_goal(
 
     for entities in &goal_collisions_q {
         if entities.contains(&ball_entity) {
-            next_level_state.set(LevelState::Win);
+            next_level_state.set(LevelState::Won);
         }
     }
-}
-
-/// Ensure ball doesn't bounce out of hole
-fn reduce_ball_bounciness(mut ball_q: Query<&mut Restitution, With<Ball>>) {
-    let mut restitution = ball_q.single_mut();
-
-    *restitution = Restitution::new(0.05).with_combine_rule(CoefficientCombine::Min);
 }
 
 #[derive(Deref, DerefMut)]
@@ -218,7 +186,7 @@ fn tick_level_transition_timer(
     timer.tick(time.delta());
 
     if timer.finished() {
-        next_level_state.set(LevelState::LoadNext);
+        next_level_state.set(LevelState::Playable);
         timer.reset();
     }
 }

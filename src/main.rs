@@ -2,6 +2,7 @@ mod app;
 mod background;
 mod ball;
 mod cam;
+mod course;
 mod debug;
 mod level;
 mod level_data;
@@ -18,6 +19,7 @@ use background::BackgroundPlugin;
 use ball::BallPlugin;
 use bevy::prelude::*;
 use cam::CamPlugin;
+use course::CoursePlugin;
 use debug::DebugPlugin;
 use level::LevelPlugin;
 use level_data::LevelDataPlugin;
@@ -50,6 +52,7 @@ fn main() {
         .add_plugins(PhysicsPlugin)
         .add_plugins(LevelDataPlugin)
         .add_plugins(MenuPlugin)
+        .add_plugins(CoursePlugin)
         .add_plugins(LevelPlugin)
         .add_plugins(BallPlugin)
         .add_plugins(LivesPlugin)

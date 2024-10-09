@@ -10,9 +10,9 @@ use bevy::{
 use crate::{
     app::AppState,
     ball::{Ball, BallHitEvent},
+    course::CourseState,
     level::LevelState,
     mouse::MouseCoords,
-    physics::PhysicsState,
 };
 
 pub struct SwingPlugin;
@@ -34,7 +34,9 @@ impl Plugin for SwingPlugin {
                 in_state(AppState::InGame)
                     .and_then(in_state(LevelState::Playable))
                     .and_then(in_state(SwingState::None))
-                    .and_then(in_state(PhysicsState::Running)),
+                    .and_then(not(
+                        in_state(CourseState::Won).or_else(in_state(CourseState::Failed))
+                    )),
             ),
         )
         .add_systems(
@@ -275,7 +277,6 @@ fn swing(
     let mut ball_vel = ball_q.single_mut();
 
     ball_vel.0 = Vec2::from_angle(swing.angle) * swing.power as f32 * LAUNCH_FACTOR;
-    // ball_vel.0 = vec2(1200.0, 0.0);
 
     event_writer.send(BallHitEvent {
         speed: ball_vel.length(),

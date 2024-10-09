@@ -16,14 +16,18 @@ impl Plugin for BallPlugin {
         app.add_event::<BallResetEvent>()
             .add_event::<BallStoppedEvent>()
             .add_event::<BallHitEvent>();
+
         app.add_systems(
             Update,
             (oob_check.run_if(in_state(LevelState::InPlay)), reset_ball).chain(),
         );
+
         app.add_systems(
             PostUpdate,
             watch_for_stopped_ball.run_if(not(in_state(LevelState::Playable))),
         );
+
+        app.add_systems(OnEnter(LevelState::Won), reduce_ball_bounciness);
     }
 }
 
@@ -91,4 +95,11 @@ fn watch_for_stopped_ball(
     for _ in ball_q.iter() {
         event_writer.send(BallStoppedEvent);
     }
+}
+
+/// Ensure ball doesn't bounce out of hole
+fn reduce_ball_bounciness(mut ball_q: Query<&mut Restitution, With<Ball>>) {
+    let mut restitution = ball_q.single_mut();
+
+    *restitution = Restitution::new(0.05).with_combine_rule(CoefficientCombine::Min);
 }

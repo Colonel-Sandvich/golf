@@ -8,7 +8,7 @@ impl Plugin for AppPlugin {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, States, Default)]
+#[derive(States, Default, Debug, PartialEq, Eq, Clone, Hash, Reflect)]
 pub enum AppState {
     #[default]
     Menu,

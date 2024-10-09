@@ -12,7 +12,7 @@ impl Plugin for SoundPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup);
         app.add_systems(PostUpdate, react_to_ball_hit);
-        app.add_systems(OnEnter(LevelState::Win), spawn_firework_sounds);
+        app.add_systems(OnEnter(LevelState::Won), spawn_firework_sounds);
         app.add_systems(PostUpdate, play_firework_sounds);
         app.add_systems(PostProcessCollisions, play_ball_bounce_sound);
     }

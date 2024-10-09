@@ -14,12 +14,12 @@ impl Plugin for MenuPlugin {
 }
 
 #[derive(Component)]
-struct Menu;
+struct MainMenu;
 
 fn spawn_menu(mut commands: Commands) {
     commands
         .spawn((
-            Menu,
+            MainMenu,
             NodeBundle {
                 style: Style {
                     width: Val::Percent(100.),
@@ -43,7 +43,7 @@ fn spawn_menu(mut commands: Commands) {
         });
 }
 
-fn cleanup_menu(mut commands: Commands, menu_q: Query<Entity, With<Menu>>) {
+fn cleanup_menu(mut commands: Commands, menu_q: Query<Entity, With<MainMenu>>) {
     for menu in menu_q.iter() {
         commands.entity(menu).despawn_recursive();
     }

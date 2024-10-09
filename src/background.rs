@@ -32,7 +32,7 @@ fn setup(
         Background,
         SpriteBundle {
             texture: beautiful.clone(),
-            transform: Transform::from_xyz(0.0, 0.0, -1.0),
+            transform: Transform::from_xyz(0.0, 0.0, -1000.0),
             sprite: Sprite {
                 custom_size: Some(size),
                 ..default()
@@ -52,5 +52,6 @@ fn follow_camera(
 
     let mut background_transform = background_q.single_mut();
 
-    background_transform.translation = cam_transform.translation;
+    background_transform.translation.x = cam_transform.translation.x;
+    background_transform.translation.y = cam_transform.translation.y;
 }

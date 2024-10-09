@@ -2,12 +2,13 @@ use avian2d::prelude::*;
 use bevy::{
     color::palettes::css::{TOMATO, WHITE},
     diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin},
+    input::common_conditions::input_toggle_active,
     prelude::*,
     sprite::{Wireframe2dConfig, Wireframe2dPlugin},
 };
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_inspector_egui::quick::{StateInspectorPlugin, WorldInspectorPlugin};
 
-use crate::{ball::BallResetEvent, physics::PhysicsState};
+use crate::{app::AppState, ball::BallResetEvent, course::CourseState, physics::PhysicsState};
 
 pub struct DebugPlugin;
 
@@ -17,7 +18,7 @@ impl Plugin for DebugPlugin {
             return;
         }
 
-        app.add_plugins(WorldInspectorPlugin::new())
+        app.add_plugins(WorldInspectorPlugin::new().run_if(input_toggle_active(true, KeyCode::F3)))
             .add_plugins(Wireframe2dPlugin)
             .insert_resource(Wireframe2dConfig {
                 global: false,
@@ -40,6 +41,16 @@ impl Plugin for DebugPlugin {
         app.add_systems(Update, reset_button)
             .add_systems(Update, change_timestep)
             .add_systems(Update, step_button.run_if(in_state(PhysicsState::Paused)));
+
+        app.register_type::<CourseState>().add_plugins(
+            StateInspectorPlugin::<CourseState>::default()
+                .run_if(input_toggle_active(true, KeyCode::F3)),
+        );
+
+        app.register_type::<AppState>().add_plugins(
+            StateInspectorPlugin::<AppState>::default()
+                .run_if(input_toggle_active(true, KeyCode::F3)),
+        );
     }
 }
 
@@ -48,21 +59,24 @@ struct FpsText;
 
 fn setup(mut commands: Commands) {
     commands.spawn((
-        TextBundle::from_section(
-            "FPS: ",
-            TextStyle {
-                font: default(),
-                font_size: 20.0,
-                color: TOMATO.into(),
-            },
-        )
-        .with_style(Style {
-            position_type: PositionType::Absolute,
-            top: Val::Px(30.0),
-            left: Val::Px(5.0),
-            ..default()
-        }),
         FpsText,
+        TextBundle {
+            text: Text::from_section(
+                "FPS: ",
+                TextStyle {
+                    font: default(),
+                    font_size: 20.0,
+                    color: TOMATO.into(),
+                },
+            ),
+            style: Style {
+                position_type: PositionType::Absolute,
+                top: Val::Px(5.0),
+                left: Val::Px(5.0),
+                ..default()
+            },
+            ..default()
+        },
     ));
 }
 

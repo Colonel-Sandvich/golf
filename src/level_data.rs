@@ -15,11 +15,13 @@ pub struct LevelDataPlugin;
 
 impl Plugin for LevelDataPlugin {
     fn build(&self, app: &mut App) {
+        app.init_resource::<Levels>();
+
         app.add_systems(PreStartup, load_levels);
     }
 }
 
-#[derive(Resource)]
+#[derive(Resource, Default, Deref)]
 pub struct Levels(pub Vec<Level>);
 
 pub struct Level {
