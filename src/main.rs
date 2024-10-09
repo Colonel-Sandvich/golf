@@ -1,52 +1,62 @@
+mod app;
 mod background;
 mod ball;
 mod cam;
+mod debug;
 mod level;
-mod light;
+mod level_data;
 mod lives;
+mod menu;
+mod mouse;
 mod music;
+mod physics;
 mod sounds;
-mod state;
+mod swing;
 
-use avian2d::{debug_render::PhysicsDebugPlugin, PhysicsPlugins};
+use app::AppPlugin;
 use background::BackgroundPlugin;
 use ball::BallPlugin;
-use bevy::{prelude::*, window::WindowResolution};
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy::prelude::*;
 use cam::CamPlugin;
+use debug::DebugPlugin;
 use level::LevelPlugin;
-use light::LightPlugin;
+use level_data::LevelDataPlugin;
 use lives::LivesPlugin;
+use menu::MenuPlugin;
+use mouse::MousePlugin;
 use music::MusicPlugin;
+use physics::PhysicsPlugin;
 use sounds::SoundPlugin;
-use state::StatePlugin;
-
-pub const WINDOW_WIDTH: f32 = 720.0;
-pub const WINDOW_HEIGHT: f32 = 1280.0;
+use swing::SwingPlugin;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                resolution: WindowResolution::new(WINDOW_WIDTH, WINDOW_HEIGHT),
-                title: "Golf".to_string(),
-                ..default()
-            }),
-            ..default()
-        }))
-        .add_plugins(WorldInspectorPlugin::new())
-        // .add_plugins(EditorPlugin::default())
-        // .insert_resource(ClearColor(Srgba::hex("74b3ff").unwrap().into()))
+        .add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        resolution: (720.0, 1280.0).into(),
+                        decorations: false,
+                        title: "Golf".to_string(),
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .set(ImagePlugin::default_nearest()),
+        )
         .add_plugins(CamPlugin)
-        .add_plugins(LightPlugin)
-        .add_plugins(PhysicsPlugins::default().with_length_unit(20.0))
-        .add_plugins(PhysicsDebugPlugin::default())
-        .add_plugins(StatePlugin)
+        .add_plugins(DebugPlugin)
+        .add_plugins(AppPlugin)
+        .add_plugins(PhysicsPlugin)
+        .add_plugins(LevelDataPlugin)
+        .add_plugins(MenuPlugin)
         .add_plugins(LevelPlugin)
         .add_plugins(BallPlugin)
         .add_plugins(LivesPlugin)
         .add_plugins(MusicPlugin)
         .add_plugins(BackgroundPlugin)
         .add_plugins(SoundPlugin)
+        .add_plugins(MousePlugin)
+        .add_plugins(SwingPlugin)
         .run();
 }

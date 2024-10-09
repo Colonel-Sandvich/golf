@@ -9,13 +9,13 @@ impl Plugin for MusicPlugin {
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let pigstep = asset_server.load::<AudioSource>("songs/pigstep.ogg");
+    let pigstep = asset_server.load::<AudioSource>("songs/otherside.ogg");
 
     commands.spawn(AudioBundle {
         source: pigstep,
         settings: PlaybackSettings {
             mode: bevy::audio::PlaybackMode::Loop,
-            volume: Volume::new(0.4),
+            volume: Volume::new(0.2),
             ..default()
         },
     });
