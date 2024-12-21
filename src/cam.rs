@@ -14,7 +14,7 @@ impl Plugin for CamPlugin {
 }
 
 fn spawn_cam(mut commands: Commands) {
-    commands.spawn((Camera2dBundle::default(), IsDefaultUiCamera));
+    commands.spawn((Camera2d::default(), IsDefaultUiCamera));
 }
 
 #[derive(Resource, Default, Deref, DerefMut)]

@@ -9,16 +9,16 @@ impl Plugin for MusicPlugin {
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let pigstep = asset_server.load::<AudioSource>("songs/otherside.ogg");
+    let background_music = asset_server.load::<AudioSource>("songs/otherside.ogg");
 
-    commands.spawn(AudioBundle {
-        source: pigstep,
-        settings: PlaybackSettings {
+    commands.spawn((
+        AudioPlayer(background_music),
+        PlaybackSettings {
             mode: bevy::audio::PlaybackMode::Loop,
             volume: Volume::new(0.2),
             ..default()
         },
-    });
+    ));
 
     // TODO: Test when assets are missing
 }

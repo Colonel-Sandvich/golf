@@ -60,21 +60,13 @@ struct FpsText;
 fn setup(mut commands: Commands) {
     commands.spawn((
         FpsText,
-        TextBundle {
-            text: Text::from_section(
-                "FPS: ",
-                TextStyle {
-                    font: default(),
-                    font_size: 20.0,
-                    color: TOMATO.into(),
-                },
-            ),
-            style: Style {
-                position_type: PositionType::Absolute,
-                top: Val::Px(5.0),
-                left: Val::Px(5.0),
-                ..default()
-            },
+        Text::new("FPS: "),
+        TextFont::from_font_size(20.0),
+        TextColor::from(TOMATO),
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(5.0),
+            left: Val::Px(5.0),
             ..default()
         },
     ));
@@ -84,7 +76,7 @@ fn update_fps_text(diagnostics: Res<DiagnosticsStore>, mut query: Query<&mut Tex
     for mut text in &mut query {
         if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
             if let Some(value) = fps.smoothed() {
-                text.sections[0].value = format!("FPS: {value:.2}");
+                text.0 = format!("FPS: {value:.2}");
             }
         }
     }

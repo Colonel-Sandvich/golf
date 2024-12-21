@@ -24,8 +24,7 @@ fn watch_mouse(
     };
 
     // Calculate a world position based on the cursor's position.
-    let Some(world_position) = camera.viewport_to_world_2d(camera_transform, cursor_position)
-    else {
+    let Ok(world_position) = camera.viewport_to_world_2d(camera_transform, cursor_position) else {
         return;
     };
 

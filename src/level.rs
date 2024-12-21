@@ -1,10 +1,5 @@
 use avian2d::prelude::*;
-use bevy::{
-    math::vec2,
-    prelude::*,
-    render::primitives::Aabb,
-    sprite::{MaterialMesh2dBundle, Mesh2dHandle, Wireframe2d},
-};
+use bevy::{math::vec2, prelude::*, render::primitives::Aabb, sprite::Wireframe2d};
 
 use crate::{
     ball::{Ball, BallResetEvent},
@@ -61,7 +56,8 @@ fn setup(
         .spawn((
             Name::new("Floor"),
             Floor,
-            ColorMesh2dBundle::default(),
+            Mesh2d::default(),
+            MeshMaterial2d::<ColorMaterial>::default(),
             Collider::default(),
             RigidBody::Static,
             Friction::new(0.4),
@@ -77,11 +73,8 @@ fn setup(
     commands.spawn((
         Name::new("Ball"),
         Ball,
-        MaterialMesh2dBundle {
-            mesh: meshes.add(ball).into(),
-            material: materials.add(Color::WHITE),
-            ..default()
-        },
+        Mesh2d(meshes.add(ball).into()),
+        MeshMaterial2d(materials.add(Color::WHITE)),
         Position::default(),
         ball.collider(),
         RigidBody::Dynamic,
@@ -97,7 +90,8 @@ fn setup(
             Goal,
             Collider::rectangle(50.0, 50.0),
             Sensor,
-            TransformBundle::default(),
+            CollidingEntities::default(),
+            Transform::default(),
         ))
         .set_parent(floor);
 }
@@ -109,8 +103,8 @@ pub fn load_level(
     mut level_q: Query<
         (
             Entity,
-            &mut Mesh2dHandle,
-            &mut Handle<ColorMaterial>,
+            &mut Mesh2d,
+            &mut MeshMaterial2d<ColorMaterial>,
             &mut Collider,
             &mut Tee,
         ),
@@ -135,7 +129,7 @@ pub fn load_level(
 
     mesh.0 = next_level.mesh.clone();
 
-    *material = next_level.material.clone();
+    **material = next_level.material.clone();
 
     *collider = Collider::polyline(next_level.points.clone(), None);
 

@@ -1,4 +1,4 @@
-use bevy::{color::palettes::css::WHITE, prelude::*};
+use bevy::prelude::*;
 
 use crate::app::AppState;
 
@@ -20,25 +20,19 @@ fn spawn_menu(mut commands: Commands) {
     commands
         .spawn((
             MainMenu,
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.),
-                    height: Val::Percent(100.),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
+            Node {
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
                 ..default()
             },
         ))
         .with_children(|parent| {
-            parent.spawn(TextBundle::from_section(
-                "PLAY",
-                TextStyle {
-                    font: default(),
-                    font_size: 64.0,
-                    color: WHITE.into(),
-                },
+            parent.spawn((
+                Text::new("PLAY"),
+                TextFont::from_font_size(64.0),
+                TextColor::WHITE,
             ));
         });
 }

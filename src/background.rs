@@ -30,15 +30,12 @@ fn setup(
 
     commands.spawn((
         Background,
-        SpriteBundle {
-            texture: beautiful.clone(),
-            transform: Transform::from_xyz(0.0, 0.0, -1000.0),
-            sprite: Sprite {
-                custom_size: Some(size),
-                ..default()
-            },
+        Sprite {
+            image: beautiful.clone(),
+            custom_size: Some(size),
             ..default()
         },
+        Transform::from_xyz(0.0, 0.0, -1000.0),
     ));
 }
 

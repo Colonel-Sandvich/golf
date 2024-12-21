@@ -67,28 +67,27 @@ fn react_to_ball_hit(
 ) {
     for event in event_reader.read() {
         let vel = event.speed.clamp(1.0, MAX_HIT_VELOCITY);
-        commands.spawn(AudioBundle {
-            source: sound.0.clone(),
-            settings: PlaybackSettings {
+
+        commands.spawn((
+            AudioPlayer(sound.0.clone()),
+            PlaybackSettings {
                 mode: bevy::audio::PlaybackMode::Despawn,
                 // Swing sound is too loud (-0.2) temp fix
                 volume: Volume::new((vel.log(MAX_HIT_VELOCITY) - 0.2).max(0.0)),
                 ..default()
             },
-        });
+        ));
     }
 }
 
 fn spawn_firework_sounds(mut commands: Commands, sounds: Res<FireworkSounds>) {
     for (sound, delay) in &sounds.0 {
         commands.spawn((
-            AudioBundle {
-                source: sound.clone(),
-                settings: PlaybackSettings {
-                    paused: true,
-                    mode: bevy::audio::PlaybackMode::Despawn,
-                    ..default()
-                },
+            AudioPlayer(sound.clone()),
+            PlaybackSettings {
+                paused: true,
+                mode: bevy::audio::PlaybackMode::Despawn,
+                ..default()
             },
             delay.clone(),
         ));
@@ -127,23 +126,23 @@ fn play_ball_bounce_sound(
             continue;
         }
 
-        let weight = ball_mass.value() * gravity.0.y;
+        let weight = ball_mass.0 * gravity.0.y;
 
-        let normal_force = collision.total_normal_impulse / time.delta_seconds();
+        let normal_force = collision.total_normal_impulse / time.delta_secs();
 
         let net_force = normal_force + weight;
 
         let volume = (net_force / MAX_FORCE_BOUNCE).sqrt().clamp(0.0, 1.0);
 
         if volume > 0.05 {
-            commands.spawn(AudioBundle {
-                source: sound.0.clone(),
-                settings: PlaybackSettings {
+            commands.spawn((
+                AudioPlayer(sound.0.clone()),
+                PlaybackSettings {
                     mode: bevy::audio::PlaybackMode::Despawn,
                     volume: Volume::new(volume),
                     ..default()
                 },
-            });
+            ));
 
             return;
         }

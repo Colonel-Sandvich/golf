@@ -44,27 +44,19 @@ struct LivesText;
 
 fn setup(mut commands: Commands) {
     commands
-        .spawn((NodeBundle {
-            style: Style {
-                width: Val::Percent(100.),
-                height: Val::Percent(100.),
-                justify_content: JustifyContent::Center,
-                padding: UiRect::top(Val::Px(20.0)),
-                ..default()
-            },
+        .spawn((Node {
+            width: Val::Percent(100.),
+            height: Val::Percent(100.),
+            justify_content: JustifyContent::Center,
+            padding: UiRect::top(Val::Px(20.0)),
             ..default()
         },))
         .with_children(|parent| {
             parent.spawn((
                 LivesText,
-                TextBundle::from_section(
-                    "Lives: ",
-                    TextStyle {
-                        font: default(),
-                        font_size: 20.0,
-                        color: TOMATO.into(),
-                    },
-                ),
+                Text::new("Lives: "),
+                TextFont::from_font_size(20.0),
+                TextColor::from(TOMATO),
             ));
         });
 }
@@ -93,7 +85,7 @@ fn update_lives_left_text(
     }
 
     for mut text in &mut lives_text_q {
-        text.sections[0].value = format!("Lives: {}", **lives_left);
+        text.0 = format!("Lives: {}", **lives_left);
     }
 }
 

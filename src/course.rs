@@ -1,4 +1,4 @@
-use bevy::color::palettes::css::{BLACK, WHITE};
+use bevy::color::palettes::css::BLACK;
 use bevy::prelude::*;
 
 use crate::level::load_level;
@@ -66,7 +66,7 @@ impl Plugin for CoursePlugin {
             .add_systems(OnEnter(CourseState::Failed), display_course_over_screen)
             .add_systems(
                 Update,
-                goto_menu.run_if(in_state(CourseState::Won).or_else(in_state(CourseState::Failed))),
+                goto_menu.run_if(in_state(CourseState::Won).or(in_state(CourseState::Failed))),
             );
     }
 }
@@ -102,27 +102,21 @@ fn display_course_over_screen(mut commands: Commands, course_state: Res<State<Co
     commands
         .spawn((
             CourseOverScreen,
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                },
-                background_color: BackgroundColor(BLACK.with_alpha(0.75).into()),
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
                 ..default()
             },
+            BackgroundColor(BLACK.with_alpha(0.75).into()),
         ))
         .with_children(|builder| {
-            builder.spawn(TextBundle::from_section(
-                text,
-                TextStyle {
-                    font: default(),
-                    font_size: 120.0,
-                    color: WHITE.into(),
-                },
+            builder.spawn((
+                Text::new(text),
+                TextFont::from_font_size(120.0),
+                TextColor::WHITE,
             ));
         });
 }

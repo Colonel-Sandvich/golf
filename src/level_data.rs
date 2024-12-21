@@ -143,7 +143,7 @@ fn directions_to_points(directions: Vec<Vec2>) -> Vec<Vec2> {
         })
         .collect();
 
-    let centre = Aabb2d::from_point_cloud(Vec2::ZERO, Rot2::IDENTITY, &points).center();
+    let centre = Aabb2d::from_point_cloud(Isometry2d::IDENTITY, &points).center();
 
     points.into_iter().map(|p| p - centre).collect()
 }

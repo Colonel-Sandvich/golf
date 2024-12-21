@@ -4,7 +4,6 @@ use avian2d::prelude::*;
 use bevy::{
     color::palettes::{css::WHITE, tailwind::GRAY_600},
     prelude::*,
-    sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
 
 use crate::{
@@ -32,10 +31,10 @@ impl Plugin for SwingPlugin {
             PreUpdate,
             (start_swing, move_swing_start_marker).chain().run_if(
                 in_state(AppState::InGame)
-                    .and_then(in_state(LevelState::Playable))
-                    .and_then(in_state(SwingState::None))
-                    .and_then(not(
-                        in_state(CourseState::Won).or_else(in_state(CourseState::Failed))
+                    .and(in_state(LevelState::Playable))
+                    .and(in_state(SwingState::None))
+                    .and(not(
+                        in_state(CourseState::Won).or(in_state(CourseState::Failed))
                     )),
             ),
         )
@@ -43,7 +42,7 @@ impl Plugin for SwingPlugin {
             Update,
             (calculate_swing_power, display_swing, swing)
                 .chain()
-                .run_if(in_state(AppState::InGame).and_then(in_state(SwingState::WindUp))),
+                .run_if(in_state(AppState::InGame).and(in_state(SwingState::WindUp))),
         )
         .add_systems(
             OnEnter(SwingState::WindUp),
@@ -92,29 +91,24 @@ fn spawn_swing_start_marker(
         .spawn((
             SwingStartMarker,
             SwingDisplay,
-            SpatialBundle {
-                transform: Transform::from_xyz(0.0, 0.0, 0.5),
-                visibility: Visibility::Hidden,
-                ..default()
-            },
+            Visibility::Hidden,
+            Transform::from_xyz(0.0, 0.0, 0.5),
         ))
         .id();
 
     commands
-        .spawn(ColorMesh2dBundle {
-            mesh: rect_mesh.clone().into(),
-            material: white.clone(),
-            ..default()
-        })
+        .spawn((
+            Mesh2d(rect_mesh.clone().into()),
+            MeshMaterial2d(white.clone()),
+        ))
         .set_parent(marker);
 
     commands
-        .spawn(ColorMesh2dBundle {
-            mesh: rect_mesh.clone().into(),
-            material: white.clone(),
-            transform: Transform::from_rotation(Quat::from_rotation_z(PI / 2.0)),
-            ..default()
-        })
+        .spawn((
+            Mesh2d(rect_mesh.clone().into()),
+            MeshMaterial2d(white.clone()),
+            Transform::from_rotation(Quat::from_rotation_z(PI / 2.0)),
+        ))
         .set_parent(marker);
 }
 
@@ -139,29 +133,23 @@ fn spawn_swing_chain(
 ) {
     let ball_radius = 5.0;
     let ball = Circle::new(ball_radius);
-    let mesh: Mesh2dHandle = meshes.add(ball).into();
+    let mesh: Mesh2d = meshes.add(ball).into();
 
     let chain_parent = commands
         .spawn((
             SwingDisplay,
             ChainStart,
-            SpatialBundle {
-                visibility: Visibility::Hidden,
-                transform: Transform::from_xyz(0.0, 0.0, 1.0),
-                ..default()
-            },
+            Visibility::Hidden,
+            Transform::from_xyz(0.0, 0.0, 1.0),
         ))
         .id();
 
     for i in 1..=CHAIN_LENGTH {
         commands
             .spawn((
-                MaterialMesh2dBundle {
-                    mesh: mesh.clone(),
-                    material: colours.gray.clone(),
-                    transform: Transform::from_xyz((CHAIN_SPACING * i) as f32, 0.0, 0.0),
-                    ..default()
-                },
+                mesh.clone(),
+                MeshMaterial2d(colours.gray.clone()),
+                Transform::from_xyz((CHAIN_SPACING * i) as f32, 0.0, 0.0),
                 ChainIndex(i),
             ))
             .set_parent(chain_parent);
@@ -226,7 +214,7 @@ fn display_swing(
     swing: Res<Swing>,
     ball_q: Query<&Position, With<Ball>>,
     mut chain_parent_q: Query<(&mut Transform, &mut Visibility), With<ChainStart>>,
-    mut chain_q: Query<(&mut Handle<ColorMaterial>, &ChainIndex)>,
+    mut chain_q: Query<(&mut MeshMaterial2d<ColorMaterial>, &ChainIndex)>,
     colours: Res<Colours>,
 ) {
     let Ok(ball_pos) = ball_q.get_single() else {
@@ -248,9 +236,9 @@ fn display_swing(
 
     for (mut color, index) in chain_q.iter_mut() {
         if index.0 <= swing.power {
-            *color = colours.white.clone();
+            **color = colours.white.clone();
         } else {
-            *color = colours.gray.clone();
+            **color = colours.gray.clone();
         }
     }
 }
