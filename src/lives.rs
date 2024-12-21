@@ -49,7 +49,7 @@ fn setup(mut commands: Commands) {
                 width: Val::Percent(100.),
                 height: Val::Percent(100.),
                 justify_content: JustifyContent::Center,
-                // align_items: AlignItems::Center,
+                padding: UiRect::top(Val::Px(20.0)),
                 ..default()
             },
             ..default()
@@ -77,12 +77,11 @@ fn toggle_lives_left_visibility(
         return;
     };
 
-    let new_visibility = match *course_state.get() == AppState::InGame {
-        true => Visibility::Visible,
-        false => Visibility::Hidden,
+    *visibility = if *course_state.get() == AppState::InGame {
+        Visibility::Visible
+    } else {
+        Visibility::Hidden
     };
-
-    *visibility = new_visibility;
 }
 
 fn update_lives_left_text(

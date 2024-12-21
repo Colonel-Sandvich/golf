@@ -84,7 +84,6 @@ fn update_fps_text(diagnostics: Res<DiagnosticsStore>, mut query: Query<&mut Tex
     for mut text in &mut query {
         if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
             if let Some(value) = fps.smoothed() {
-                // Update the value of the second section
                 text.sections[0].value = format!("FPS: {value:.2}");
             }
         }

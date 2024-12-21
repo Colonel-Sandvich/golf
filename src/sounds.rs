@@ -127,7 +127,7 @@ fn play_ball_bounce_sound(
             continue;
         }
 
-        let weight = ball_mass.0 * gravity.0.y;
+        let weight = ball_mass.value() * gravity.0.y;
 
         let normal_force = collision.total_normal_impulse / time.delta_seconds();
 
