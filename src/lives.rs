@@ -69,11 +69,10 @@ fn toggle_lives_left_visibility(
         return;
     };
 
-    *visibility = if *course_state.get() == AppState::InGame {
-        Visibility::Visible
-    } else {
-        Visibility::Hidden
-    };
+    *visibility = match *course_state.get() {
+        AppState::InGame => Visibility::Visible,
+        _ => Visibility::Hidden,
+    }
 }
 
 fn update_lives_left_text(

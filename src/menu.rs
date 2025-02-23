@@ -6,8 +6,7 @@ pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::Menu), spawn_menu)
-            .add_systems(OnExit(AppState::Menu), cleanup_menu);
+        app.add_systems(OnEnter(AppState::Menu), spawn_menu);
 
         app.add_systems(Update, menu.run_if(in_state(AppState::Menu)));
     }
@@ -20,6 +19,7 @@ fn spawn_menu(mut commands: Commands) {
     commands
         .spawn((
             MainMenu,
+            StateScoped(AppState::Menu),
             Node {
                 width: Val::Percent(100.),
                 height: Val::Percent(100.),
@@ -35,12 +35,6 @@ fn spawn_menu(mut commands: Commands) {
                 TextColor::WHITE,
             ));
         });
-}
-
-fn cleanup_menu(mut commands: Commands, menu_q: Query<Entity, With<MainMenu>>) {
-    for menu in menu_q.iter() {
-        commands.entity(menu).despawn_recursive();
-    }
 }
 
 fn menu(input: Res<ButtonInput<MouseButton>>, mut next_state: ResMut<NextState<AppState>>) {

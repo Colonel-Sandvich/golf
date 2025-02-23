@@ -97,15 +97,12 @@ fn spawn_swing_start_marker(
         .id();
 
     commands
-        .spawn((
-            Mesh2d(rect_mesh.clone().into()),
-            MeshMaterial2d(white.clone()),
-        ))
+        .spawn((Mesh2d(rect_mesh.clone()), MeshMaterial2d(white.clone())))
         .set_parent(marker);
 
     commands
         .spawn((
-            Mesh2d(rect_mesh.clone().into()),
+            Mesh2d(rect_mesh.clone()),
             MeshMaterial2d(white.clone()),
             Transform::from_rotation(Quat::from_rotation_z(PI / 2.0)),
         ))

@@ -109,10 +109,14 @@ fn play_firework_sounds(
 
 const MAX_FORCE_BOUNCE: f32 = 320_000_000.0;
 
+#[derive(Component)]
+struct BallBounceSoundMarker;
+
 fn play_ball_bounce_sound(
     mut commands: Commands,
+    ball_q: Query<(Entity, &ComputedMass), With<Ball>>,
+    ball_bounce_sounds_q: Query<(), With<BallBounceSoundMarker>>,
     collisions: Res<Collisions>,
-    ball_q: Query<(Entity, &Mass), With<Ball>>,
     gravity: Res<Gravity>,
     sound: Res<BallBounceSound>,
     time: Res<Time<Substeps>>,
@@ -121,12 +125,17 @@ fn play_ball_bounce_sound(
         return;
     };
 
+    // Keep number of bounce sounds below 6
+    if ball_bounce_sounds_q.iter().len() >= 5 {
+        return;
+    }
+
     for collision in collisions.collisions_with_entity(ball_entity) {
         if collision.is_sensor {
             continue;
         }
 
-        let weight = ball_mass.0 * gravity.0.y;
+        let weight = ball_mass.value() * gravity.0.y;
 
         let normal_force = collision.total_normal_impulse / time.delta_secs();
 
@@ -136,6 +145,7 @@ fn play_ball_bounce_sound(
 
         if volume > 0.05 {
             commands.spawn((
+                BallBounceSoundMarker,
                 AudioPlayer(sound.0.clone()),
                 PlaybackSettings {
                     mode: bevy::audio::PlaybackMode::Despawn,

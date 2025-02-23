@@ -80,9 +80,9 @@ fn level_1() -> RawLevelData {
             Vec2::X * 50.0,
             Vec2::Y * 75.0,
             Vec2::X * 70.0,
-            Vec2::Y * -590.0,
+            Vec2::Y * -540.0,
             Vec2::X * -720.0,
-            Vec2::Y * 540.0,
+            Vec2::Y * 490.0,
         ],
         goal_index: 4,
         tee: vec2(50.0, 0.0),
@@ -100,9 +100,9 @@ fn level_2() -> RawLevelData {
             Vec2::X * 50.0,
             Vec2::Y * 75.0,
             Vec2::X * 70.0,
-            Vec2::Y * -690.0,
+            Vec2::Y * -640.0,
             Vec2::X * -770.0,
-            Vec2::Y * 540.0,
+            Vec2::Y * 490.0,
         ],
         goal_index: 4,
         tee: vec2(50.0, 0.0),
@@ -164,10 +164,8 @@ fn convert_level_points_to_mesh(points: &Vec<Vec2>) -> Mesh {
 
     let indices = earcut(&flattened_points, &Vec::new(), 2)
         .map(|x| x.into_iter().map(|i| i as u32).collect::<Vec<_>>())
-        .expect(&format!(
-            "Could not make mesh with these invalid points {:?}",
-            points
-        ));
+        .unwrap_or_else(|_| panic!("Could not make mesh with these invalid points {:?}", points));
+
     mesh.insert_indices(Indices::U32(indices));
 
     mesh

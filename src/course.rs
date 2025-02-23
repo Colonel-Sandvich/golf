@@ -18,6 +18,7 @@ pub struct CoursePlugin;
 impl Plugin for CoursePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<CourseState>();
+        app.enable_state_scoped_entities::<CourseState>();
 
         app.init_resource::<NextLevelIndex>();
 
@@ -66,7 +67,10 @@ impl Plugin for CoursePlugin {
             .add_systems(OnEnter(CourseState::Failed), display_course_over_screen)
             .add_systems(
                 Update,
-                goto_menu.run_if(in_state(CourseState::Won).or(in_state(CourseState::Failed))),
+                goto_menu.run_if(
+                    not(in_state(AppState::Menu))
+                        .and(in_state(CourseState::Won).or(in_state(CourseState::Failed))),
+                ),
             );
     }
 }
@@ -94,7 +98,7 @@ struct CourseOverScreen;
 
 fn display_course_over_screen(mut commands: Commands, course_state: Res<State<CourseState>>) {
     let text = match course_state.get() {
-        CourseState::Won => "Le Epic Win!",
+        CourseState::Won => "WINNER!",
         CourseState::Failed => "GAME OVER",
         _ => return,
     };
@@ -102,6 +106,7 @@ fn display_course_over_screen(mut commands: Commands, course_state: Res<State<Co
     commands
         .spawn((
             CourseOverScreen,
+            StateScoped(AppState::InGame),
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
@@ -124,13 +129,8 @@ fn display_course_over_screen(mut commands: Commands, course_state: Res<State<Co
 fn goto_menu(
     input: Res<ButtonInput<MouseButton>>,
     mut next_app_state: ResMut<NextState<AppState>>,
-    mut commands: Commands,
-    course_over_q: Query<Entity, With<CourseOverScreen>>,
 ) {
     if input.just_released(MouseButton::Left) {
         next_app_state.set(AppState::Menu);
-        for node in course_over_q.iter() {
-            commands.entity(node).despawn_recursive();
-        }
     }
 }

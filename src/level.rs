@@ -73,7 +73,7 @@ fn setup(
     commands.spawn((
         Name::new("Ball"),
         Ball,
-        Mesh2d(meshes.add(ball).into()),
+        Mesh2d(meshes.add(ball)),
         MeshMaterial2d(materials.add(Color::WHITE)),
         Position::default(),
         ball.collider(),
@@ -159,6 +159,7 @@ fn detect_ball_in_goal(
     for entities in &goal_collisions_q {
         if entities.contains(&ball_entity) {
             next_level_state.set(LevelState::Won);
+            return;
         }
     }
 }
